@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  displayName  String
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  voices       VoiceProfile[]
+  projects     AudioProject[]
+  generations  GenerationHistory[]
+  settings     ProviderSettings?
+}
+
+model VoiceProfile {
+  id               String              @id @default(uuid())
+  userId           String
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  provider         String              // "xtts" | "elevenlabs"
+  providerVoiceId  String
+  sampleStorageKey String
+  previewStorageKey String?
+  status           String              @default("READY") // "PROCESSING" | "READY" | "FAILED"
+  consentConfirmed Boolean             @default(true)
+  durationSeconds  Float               @default(0)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  projects         AudioProject[]
+  generations      GenerationHistory[]
+
+  @@index([userId])
+}
+
+model AudioProject {
+  id          String              @id @default(uuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voiceId     String
+  voice       VoiceProfile        @relation(fields: [voiceId], references: [id], onDelete: Cascade)
+  title       String
+  scriptText  String              @db.Text
+  language    String              @default("en")
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  generations GenerationHistory[]
+
+  @@index([userId])
+}
+
+model GenerationHistory {
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId       String?
+  project         AudioProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  voiceId         String
+  voice           VoiceProfile @relation(fields: [voiceId], references: [id], onDelete: Cascade)
+  scriptText      String       @db.Text
+  language        String
+  provider        String
+  status          String       @default("QUEUED") // "QUEUED" | "PROCESSING" | "COMPLETED" | "FAILED"
+  progress        Int          @default(0)
+  mp3StorageKey   String?
+  wavStorageKey   String?
+  durationSeconds Float?
+  errorMessage    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ProviderSettings {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeProvider     String   @default("xtts") // "xtts" | "elevenlabs"
+  xttsInferenceUrl   String?
+  externalApiKeyHint String?
+  defaultLanguage    String   @default("en")
+  updatedAt          DateTime @updatedAt
+}

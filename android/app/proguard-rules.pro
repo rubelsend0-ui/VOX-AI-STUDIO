@@ -1,0 +1,1 @@
+-keep class com.voxai.studio.data.model.** { *; }
