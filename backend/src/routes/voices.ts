@@ -92,7 +92,7 @@ router.post('/clone', audioUpload.single('audio'), async (req: AuthenticatedRequ
     logger.error('Voice cloning failed', { error: err?.message });
     res.status(500).json({
       success: false,
-      error: err?.message || 'Failed to clone voice with configured AI provider.',
+      error: err?.message || 'Failed to clone voice', stack: err?.stack,
     });
   } finally {
     safeUnlink(uploadedPath);
