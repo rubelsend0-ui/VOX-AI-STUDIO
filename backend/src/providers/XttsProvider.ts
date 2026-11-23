@@ -24,7 +24,7 @@ export class XttsProvider implements VoiceAIProvider {
   constructor(private readonly inferenceUrl: string, private readonly apiKey?: string) {}
 
   private get headers() {
-    return this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {};
+    return { 'ngrok-skip-browser-warning': 'true', ...(this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {}) };
   }
 
   private assertConfigured() {
